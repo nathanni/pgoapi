@@ -58,7 +58,7 @@ class RpcApi:
     RPC_ID = 0
     START_TIME = 0
 
-    def __init__(self, auth_provider, device_info):
+    def __init__(self, auth_provider):
 
         self.log = logging.getLogger(__name__)
 
@@ -77,8 +77,6 @@ class RpcApi:
 
         """ data fields for unknown6 """
         self.session_hash = os.urandom(32)
-
-        self.device_info = device_info
 
     def activate_signature(self, lib_path):
         try:
@@ -119,12 +117,12 @@ class RpcApi:
 
         return http_response
 
-    def request(self, endpoint, subrequests, player_position):
+    def request(self, endpoint, subrequests, player_position, signature=None):
 
         if not self._auth_provider or self._auth_provider.is_login() is False:
             raise NotLoggedInException()
 
-        request_proto = self._build_main_request(subrequests, player_position)
+        request_proto = self._build_main_request(subrequests, player_position, signature)
         response = self._make_rpc(endpoint, request_proto)
 
         response_dict = self._parse_main_response(response, subrequests)
@@ -170,7 +168,7 @@ class RpcApi:
             else:
                 self.log.debug('Received Session Ticket valid for %02d:%02d:%02d hours (%s < %s)', h, m, s, now_ms, auth_ticket['expire_timestamp_ms'])
 
-    def _build_main_request(self, subrequests, player_position=None):
+    def _build_main_request(self, subrequests, player_position=None, signature=None):
         self.log.debug('Generating main RPC request...')
 
         request = RequestEnvelope()
@@ -199,7 +197,7 @@ class RpcApi:
             ticket_serialized = request.auth_info.SerializeToString() #Sig uses this when no auth_ticket available
 
         if self._signature_gen:
-            sig = Signature()
+            sig = Signature() if signature is None or isinstance(signature, Signature) is False else signature
 
             sig.location_hash1 = generateLocation1(ticket_serialized, request.latitude, request.longitude, request.altitude)
             sig.location_hash2 = generateLocation2(request.latitude, request.longitude, request.altitude)
@@ -211,9 +209,6 @@ class RpcApi:
             sig.session_hash = self.session_hash
             sig.timestamp = get_time(ms=True)
             sig.timestamp_since_start = get_time(ms=True) - RpcApi.START_TIME
-
-            for key in self.device_info:
-                setattr(sig.device_info, key, self.device_info[key])
 
             signature_proto = sig.SerializeToString()
 
