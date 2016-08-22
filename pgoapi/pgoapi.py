@@ -119,9 +119,8 @@ class PGoApi:
     def get_auth_provider(self):
         return self._auth_provider
 
-    def create_request(self, signature=None):
-        request = PGoApiRequest(self, self._position_lat, self._position_lng,
-                                self._position_alt, signature)
+    def create_request(self):
+        request = PGoApiRequest(self, self._position_lat, self._position_lng, self._position_alt)
         return request
 
     def activate_signature(self, lib_path):
@@ -193,8 +192,7 @@ class PGoApi:
 
 class PGoApiRequest:
 
-    def __init__(self, parent, position_lat, position_lng, position_alt,
-                 signature=None):
+    def __init__(self, parent, position_lat, position_lng, position_alt):
         self.log = logging.getLogger(__name__)
 
         self.__parent__ = parent
@@ -209,7 +207,7 @@ class PGoApiRequest:
 
         self._req_method_list = []
 
-    def call(self):
+    def call(self, signature=None):
         if not self._req_method_list:
             raise EmptySubrequestChainException()
 
