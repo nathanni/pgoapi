@@ -37,8 +37,8 @@ import argparse
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 # import Pokemon Go API lib
-# from mock_pgoapi import mock_pgoapi as pgoapi
-from pgoapi import pgoapi
+from mock_pgoapi import mock_pgoapi as pgoapi
+# from pgoapi import pgoapi
 from pgoapi import utilities as util
 
 
